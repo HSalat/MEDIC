@@ -13,8 +13,10 @@ enum Sort {
 
 struct House {
     adress: Address,
-    capacity: i32, // For now, each geography unit contains exactly one abstract house
-    price: i32, // For now, average price inside the house
+    /// For now, each geography unit contains exactly one abstract house
+    capacity: i32,
+    /// For now, average price inside the house
+    price: i32,
 }
 
 struct Venue {
@@ -78,29 +80,33 @@ impl Agent {
 
 // ***** Income evolution *****
 
-pub fn income(agent: Agent, rate: f32) { // add rate to global parameters
-    let a = agent.age;
-    let i = agent.social_class.init_income;
-    let g = agent.social_class.growth;
-    let s = agent.social_class.start;
-    let r = agent.social_class.retire + 1;
-    if a < s {
-        0
-    } else if a < r {
-        i * g.pow(a - s) 
-    } else {
-        i * r
+impl Agent {
+    // TODO add rate to global parameters
+    pub fn income(&self, rate: f32) -> f32 {
+        let age = self.age;
+        let init_income = self.social_class.init_income;
+        let start = self.social_class.start;
+        let retire = self.social_class.retire + 1;
+        if age < start {
+            0.0
+        } else if age < retire {
+            init_income * self.social_class.growth.pow(age - start)
+        } else {
+            init_income * retire
+        }
     }
 }
 
 // ***** Behaviour functions *****
 
-fn income_in_wneigh(s_network: SNetwork, adress: Address, dist: f32) { // add walking distance to define walking neigh to global parameters
+fn income_in_wneigh(s_network: SNetwork, adress: Address, dist: f32) -> Vec<i32> { // add walking distance to define walking neigh to global parameters
     // returns income distrib within walking distance
+    todo!()
 }
 
-fn activity_in_tneigh(t_network: TNetwork, adress: Address, time: f32) { // add transport time to define transport neigh to global parameters
+fn activity_in_tneigh(t_network: TNetwork, adress: Address, time: f32) -> Vec<i32> { // add transport time to define transport neigh to global parameters
     // returns number of each activity within transport distance
+    todo!()
 }
 
 fn mean(list: &[i32]) -> f64 {
@@ -108,16 +114,16 @@ fn mean(list: &[i32]) -> f64 {
     f64::from(sum) / (list.len() as f64)
 }
 
-pub fn behaviour_walking(agent: Agent, rate: f32, house: House, s_network: SNetwork, dist: f32) {
-    let i = income(agent, rate);
+pub fn behaviour_walking(agent: &Agent, rate: f32, house: House, s_network: SNetwork, dist: f32) {
+    let i = agent.income(rate);
     let j = income_in_wneigh(s_network, agent.house.adress, dist);
     let jj = income_in_wneigh(s_network, house.adress, dist);
     match agent.behaviour_walk {
-        "Statusquo" => 1/(mean(j) - mean(jj)).abs(),
-        "MaxSim" => 1/(i - mean(jj)).abs(),
-        "KotH" => i - mean(jj),
-        "PoBA" => mean(jj) - i,
-        "Rooted" => 1,
+        BehaviourWalking::Statusquo => 1/(mean(j) - mean(jj)).abs(),
+        BehaviourWalking::MaxSim => 1/(i - mean(jj)).abs(),
+        BehaviourWalking::KotH => i - mean(jj),
+        BehaviourWalking::PoBA => mean(jj) - i,
+        BehaviourWalking::Rooted => 1,
     }
 }
 
@@ -125,22 +131,22 @@ pub fn behaviour_transport(agent: Agent, rate: f32) {
     let (j,l,s) = activity_in_tneigh(s_network, agent.house.adress, dist);
     let (jj,ll,ss) = activity_in_tneigh(s_network, house.adress, dist);
     match agent.behaviour_trans {
-        "Statusquo" => 1/((j - jj).abs() + (l - ll).abs() + (s - ss).abs()),
-        "MaxOpp" => jj + ll + ss,
-        "Picky" => ll + ss - jj,
-        "None" => 1,
+        BehaviourTransport::Statusquo => 1/((j - jj).abs() + (l - ll).abs() + (s - ss).abs()),
+        BehaviourTransport::MaxOpp => jj + ll + ss,
+        BehaviourTransport::Picky => ll + ss - jj,
+        BehaviourTransport::None => 1,
     }
 }
 
 // ***** Affordability rating *****
 
-pub fn affordability(agent: Agent, house: House, rate: f32, price_to_income: f32, fund: f32) { // add price_to_income to global parameters
-    let i = price_to_income * income(agent, rate) + fund;
+pub fn affordability(agent: Agent, house: House, rate: f32, price_to_income: f32, fund: f32) -> f32 { // add price_to_income to global parameters
+    let i = price_to_income * agent.income(rate) + fund;
     let p = house.price;
     if p > i {
-        1 / (1 + ((p - 1.5 * i)/6).exp())
+        1.0 / (1.0 + ((p - 1.5 * i)/6.0).exp())
     } else {
-        (- ((0.7 * i - p)/5).exp()).exp()
+        (- ((0.7 * i - p)/5.0).exp()).exp()
     }
 }
 
