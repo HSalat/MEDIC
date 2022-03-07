@@ -53,7 +53,7 @@ pub struct SocialClass{
     death: i32,
 }
 
-enum BehaviourWalking {
+pub enum BehaviourWalking {
     Statusquo,
     MaxSim,
     KotH,
@@ -61,8 +61,8 @@ enum BehaviourWalking {
     Rooted,
 }
 
-enum BehaviourTransport {
-    Statusquo,
+pub enum BehaviourTransport {
+    TrStatusquo,
     MaxOpp,
     Picky,
     None,
@@ -136,7 +136,7 @@ pub fn behaviour_transport(agent: Agent, house:House, t_network: TNetwork, time:
     let (j,l,s) = activity_in_tneigh(t_network, agent.house.address, time);
     let (jj,ll,ss) = activity_in_tneigh(t_network, house.address, time);
     match agent.behaviour_trans {
-        BehaviourTransport::Statusquo => 1/((j - jj).abs() + (l - ll).abs() + (s - ss).abs()),
+        BehaviourTransport::TrStatusquo => 1/((j - jj).abs() + (l - ll).abs() + (s - ss).abs()),
         BehaviourTransport::MaxOpp => jj + ll + ss,
         BehaviourTransport::Picky => ll + ss - jj,
         BehaviourTransport::None => 1,
@@ -156,7 +156,7 @@ pub fn affordability(agent: Agent, house: House, rate: f32, price_to_income: f32
     }
 }
 
-// add freeze period
+// TODO add freeze period
 
 
 

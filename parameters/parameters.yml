@@ -1,0 +1,26 @@
+scenario_definition:
+  name: "test" # name for the study area (str)
+  iterations: 50 # number of model iterations (years) (i32)
+
+sandbox_calibration:
+  rate: 0.6821 # ratio between initial salary and retirement salary (f32)
+  dist: 5.0 #  allowed distance in km through the street network to difine walking neighbourhood (f32)
+  time: 25.0 # allowed time in min through transport to define transport neighbourhood (f32)
+  price_to_income: 6.0 # average 'affordable' house price = price_to_income * yearly income (f32)
+  birth: 0.3 # number of new born each year as a ratio of the size of the population (f32)
+  immigration: 0.05 # number of new immigrants each year as a ratio of the size of the population (f32)
+  emigration: 0.05 # prob of a random living individual emigrating (f32)
+  dissatisfaction: 0.5 # threshold of measured dissatisfaction prompting relocation (f32)
+  #l_to_v: 0.65 # 'loan to value': mortgage has to be repaid before a property can be vacated again
+  #inflation: for now we assume salary inflation and house price inflation are aligned
+
+behaviours:
+  Statusquo: 0.4
+  MaxSim: 0.2
+  KotH: 0.15
+  PoBA: 0.15
+  Rooted: 0.1
+  TRStatusquo: 0.2
+  MaxOpp: 0.7
+  Picky: 0.05
+  None: 0.05
