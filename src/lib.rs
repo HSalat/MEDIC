@@ -14,6 +14,8 @@ pub enum Sort {
 }
 
 pub struct House {
+    // For now, free agents from the pool are stored within an infinite virtual house
+    pool: bool,
     address: Address,
     // For now, each geography unit contains exactly one abstract house
     capacity: i32,
@@ -61,6 +63,7 @@ pub enum BehaviourWalking {
     Rooted,
 }
 
+
 pub enum BehaviourTransport {
     TrStatusquo,
     MaxOpp,
@@ -68,7 +71,9 @@ pub enum BehaviourTransport {
     None,
 }
 
+
 pub struct Agent {
+    household_id: i32,
     age: i32,
     house: House,
     social_class: SocialClass,

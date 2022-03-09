@@ -2,7 +2,9 @@
 
 ## Essential
 - Define 'closed' social classes + design random draws within each class
+- Social class distribution
 - Check all known parameters (set to national level? -- currently set to london)
+- household logic
 
 ## Non essential
 - Amenities random change (maybe depend on gentrification?) -> or assume study "all other parameters remaining equal"
@@ -29,9 +31,9 @@
 - `income_in_wneigh` and `activity_in_tneigh`
 
 ## Non essential
-- household logic
 - Freeze period before property can be vacated again
 - Add println for user's convenience
+- immigration with families
 
 
 # Calibration
