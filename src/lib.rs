@@ -79,6 +79,9 @@ pub struct Agent {
     social_class: SocialClass,
     behaviour_walk: BehaviourWalking,
     behaviour_trans: BehaviourTransport,
+    // To record initial satisfaction and compare if neighbourhood degrades
+    initial_walk: f32,
+    initial_trans: i32,
 }
 
 impl Agent {

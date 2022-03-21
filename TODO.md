@@ -6,8 +6,10 @@
 - Check all known parameters (set to national level? -- currently set to london)
 - household logic
 
+
 ## Non essential
 - Amenities random change (maybe depend on gentrification?) -> or assume study "all other parameters remaining equal"
+- Adjust life expectency for accidental death (currently included as "emmigration" for simplicity) + orphans?
 
 
 # Data
@@ -34,6 +36,7 @@
 - Freeze period before property can be vacated again
 - Add println for user's convenience
 - immigration with families
+- emigtration without fanilies
 
 
 # Calibration

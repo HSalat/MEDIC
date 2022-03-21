@@ -18,11 +18,18 @@ fn main(){
 
     let path_to_agents = ""; // TODO data structure
     let path_to_houses = ""; // TODO data structure
+    let path_to_street_network = ""; // TODO data structure
+    let path_to_trnsport_network = ""; // TODO data structure
+
+    /////// !!!!!!!! equivalent of self in this context? !!!!!!!!
 
     let iter = params.iterations;
 
-    let agents: Value = serde_json::from_str(path_to_agents)?; // How to read as list/vec of <Agent> as defined in lib?
-    let houses: Value = serde_json::from_str(path_to_houses)?; // How to read as list/vec of <House> as defined in lib?
+    let agents: Value = serde_json::from_str(path_to_agents)?; // How to read as list/vec of <Agent> as defined in lib? + mutable
+    let houses: Value = serde_json::from_str(path_to_houses)?; // How to read as list/vec of <House> as defined in lib? + mutable
+
+    let s_network: SNetwork = serde_json::from_str(path_to_street_network)?; // ...
+    let t_network: TNetwork = serde_json::from_str(path_to_transport_network)?; // ...
 
     let sq = params.status_quo;
     let ms = params.max_sim + sq;
@@ -31,6 +38,11 @@ fn main(){
     let trsq = params.t_r_status_quo;
     let mo = params.max_opp + trsq;
     let pi = params.picky + mo;
+
+    // Parameters needed throughout the process
+    let rate = params.rate;
+    let dist = params.dist;
+    let time = params.time;
 
     impl Distribution<BehaviourWalking> for Standard {
         fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> BehaviourWalking {
@@ -69,7 +81,7 @@ fn seeding(agents: Vec<Agent>, houses: Vec<Houses>, params: Params) {
 fn step(agents: Vec<Agent>, houses: Vec<Houses>, params: Params) {
 
     // 1. add new born agents + immigrant agents
-    let tot_nb = agents.len() * param.birth;
+    let tot_nb = agents.len() * params.birth;
     let tot_im = agents.len() * params.immigration;
 
     let h_id = vec![1, 2, 3];// agents.household_id; how to extract all household_id ???
@@ -83,14 +95,16 @@ fn step(agents: Vec<Agent>, houses: Vec<Houses>, params: Params) {
         let behaviour_walking: BehaviourWalking = rand::random();
         let behaviour_transport: BehaviourTransport = ramd::random();
 
-        let new_agent: Agent = Agent {
-                                    household_id: h_id.get(draw_h),
-                                    age: 0,
-                                    house: houses.get(0),
-                                    social_class: sc.get(draw_sc),
-                                    behaviour_walk: behaviour_walking,
-                                    ehaviour_trans: behaviour_transport,
-                                };
+        let mut new_agent: Agent = Agent {
+                                        household_id: h_id.get(draw_h),
+                                        age: 0,
+                                        house: houses.get(0),
+                                        social_class: sc.get(draw_sc),
+                                        behaviour_walk: behaviour_walking,
+                                        behaviour_trans: behaviour_transport,
+                                        initial_walk: 0.0, // maybe NA / None would be more appropriate?
+                                        initial_trans: 0, // maybe NA / None would be more appropriate?
+                                    };
 
         agents.push(new_agent)
     }
@@ -108,14 +122,16 @@ fn step(agents: Vec<Agent>, houses: Vec<Houses>, params: Params) {
         let behaviour_walking: BehaviourWalking = rand::random();
         let behaviour_transport: BehaviourTransport = ramd::random();
 
-        let new_agent: Agent = Agent {
-                                    household_id: new_h_id,
-                                    age: age,
-                                    house: houses.get(0),
-                                    social_class: social_class,
-                                    behaviour_walk: behaviour_walking,
-                                    ehaviour_trans: behaviour_transport,
-                                };
+        let mut new_agent: Agent = Agent {
+                                        household_id: new_h_id,
+                                        age: age,
+                                        house: houses.get(0),
+                                        social_class: social_class,
+                                        behaviour_walk: behaviour_walking,
+                                        behaviour_trans: behaviour_transport,
+                                        initial_walk: 0.0, // maybe NA / None would be more appropriate?
+                                        initial_trans: 0, // maybe NA / None would be more appropriate?
+                                    };
 
         agents.push(new_agent)
     }
@@ -123,14 +139,48 @@ fn step(agents: Vec<Agent>, houses: Vec<Houses>, params: Params) {
     // 2. increase all agents age + kill agents > life expectancy 
     for agent in agents {
         up(agent);
-        if agent.age > agent.social_class.death {
-            todo!() // ???
+    }
+
+    agents.retain(|&x| x.age <= x.social_class.death); // what with potential children left alone?
+
+    // 3. vacate random agents (emigration) // accidental death before life expectancy counted as emigration
+    let tot_em = h_id.len() * params.emigration; // for now remove entire households at once. TODO: elect new head of household if needed and > 18 
+
+    let draw_em = rng.gen_range(0..h_id.len()); // remove agents no matter where they are
+
+    agents.retain(|&x| !draw_em.contains(x.household_id));
+    
+    // 4. vacate dissatisfied and add to waiting list
+    let dissatisfaction = params.dissatisfaction;
+
+    let mut waiting_list: Vec<Agents> = Vec::new();;
+
+    /*let mut waiting_list = agents.retain(|&x| // maybe very slow? how to speed this up?
+                                        x.house != houses.get(0) |
+                                        ( 
+                                            /* is the code stopping at first condition true or still evaluating 
+                                            the second part of or? otherwise pb with houses[0] returning 0 for behaviours */
+                                            behaviour_walking(x, rate, x.house, s_network, dist) > dissatisfaction * x.initial_walk & // or |
+                                            behaviour_transport(x, rate, x.house, s_network, time) > dissatisfaction * x.initial_trans
+                                        )
+                                    );
+    */
+
+    for agent in tied_agents { // how to simplify this???
+        if agent.house != houses.get(0) &
+            (
+                behaviour_walking(agent, rate, agent.house, s_network, dist) < agent.initial_walk * dissatisfaction | // or &
+                behaviour_transport(agent, rate, agent.house, s_network, time) < agent.initial_transport * dissatisfaction
+            )
+            {
+                agent.house = houses.get(0);
+                waiting_list.push(agent);
         }
     }
-    
-    // 3. vacate dissatisfied and add to waiting list
-    // 4. vacate random agents (emigration)
+
     // 5. fill houses from waiting list, then larger pool
+
+    
     // 6. house price update
 }
 
